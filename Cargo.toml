@@ -1,13 +1,15 @@
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [package]
-name = "todo-list-cli"
+name = "todo"
 version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 chrono = "0.4.38"
 clap = { version = "4.5.7", features = ["derive"] }
 colored = "2.1.0"
+dirs-next = "2.0.0"
 rusqlite = "0.31.0"
+serde = "1.0.203"
+toml = "0.8.14"
 
