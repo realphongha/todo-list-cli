@@ -1,10 +1,11 @@
 use std::io::Write;
 use std::path::PathBuf;
 use std::{io, usize};
-use chrono::DateTime;
+use chrono::{DateTime, Duration};
 use chrono::prelude::Local;
 use rusqlite::{params, Connection};
 use colored::Colorize;
+use crate::config::Config;
 
 struct Task {
     id: i32,
@@ -70,7 +71,9 @@ pub fn get_db_conn(path: PathBuf) -> Connection {
     conn
 }
 
-fn get_list(conn: &Connection) -> Vec<Task> {
+fn get_list(conn: &Connection, cfg: &Config) -> Vec<Task> {
+    // clean old tasks (that are done or removed for a long time)
+    clean_by_datetime(conn, cfg);
     let mut stmt = conn.prepare(
         "SELECT id, name, description, status, done_at FROM tasks
             ORDER BY status, done_at"
@@ -93,9 +96,9 @@ fn get_list(conn: &Connection) -> Vec<Task> {
     tasks
 }
 
-pub fn list(conn: Connection) {
+pub fn list(conn: Connection, cfg: Config) {
     println!("TODO cli app. Run `todo --help` for more info.\n");
-    let tasks = get_list(&conn);
+    let tasks = get_list(&conn, &cfg);
     if tasks.is_empty() {
         println!("No tasks to show!");
         return;
@@ -105,7 +108,7 @@ pub fn list(conn: Connection) {
     }
 }
 
-pub fn add(conn: Connection, name_: &Option<String>, description_: &Option<String>) {
+pub fn add(conn: Connection, cfg: Config, name_: &Option<String>, description_: &Option<String>) {
     let mut name = String::new();
     let mut description = String::new();
     if name_.is_none() {
@@ -138,11 +141,11 @@ pub fn add(conn: Connection, name_: &Option<String>, description_: &Option<Strin
     );
     res.expect("Failed to add task!");
     println!();
-    list(conn);
+    list(conn, cfg);
 }
 
-pub fn edit(conn: Connection) {
-    let tasks = get_list(&conn);
+pub fn edit(conn: Connection, cfg: Config) {
+    let tasks = get_list(&conn, &cfg);
     if tasks.is_empty() {
         println!("No tasks to edit!");
         return;
@@ -192,11 +195,11 @@ pub fn edit(conn: Connection) {
     );
     res.expect("Failed to edit task!");
     println!();
-    list(conn);
+    list(conn, cfg);
 }
 
-pub fn done(conn: Connection) {
-    let tasks = get_list(&conn);
+pub fn done(conn: Connection, cfg: Config) {
+    let tasks = get_list(&conn, &cfg);
     if tasks.is_empty() {
         println!("No tasks to edit!");
         return;
@@ -226,11 +229,11 @@ pub fn done(conn: Connection) {
     );
     res.expect("Failed to edit task!");
     println!();
-    list(conn);
+    list(conn, cfg);
 }
 
-pub fn delete(conn: Connection) {
-    let tasks = get_list(&conn);
+pub fn delete(conn: Connection, cfg: Config) {
+    let tasks = get_list(&conn, &cfg);
     if tasks.is_empty() {
         println!("No tasks to delete!");
         return;
@@ -260,5 +263,22 @@ pub fn delete(conn: Connection) {
     );
     res.expect("Failed to delete task!");
     println!();
-    list(conn);
+    list(conn, cfg);
+}
+
+pub fn clean_by_datetime(conn: &Connection, cfg: &Config) {
+    let now = Local::now();
+    let datetime = now - Duration::days(cfg.task_life_cycle.keep_done_tasks as i64);
+    let res = conn.execute(
+        "DELETE FROM tasks WHERE done_at < ?1 AND status == 1",
+        params![datetime_to_sql_string(datetime)]
+    );
+    res.expect("Failed to delete done task!");
+    let datetime = now - Duration::days(cfg.task_life_cycle.keep_deleted_tasks as i64);
+
+    let res = conn.execute(
+        "DELETE FROM tasks WHERE done_at < ?1 AND status == 2",
+        params![datetime_to_sql_string(datetime)]
+    );
+    res.expect("Failed to delete removed task!");
 }

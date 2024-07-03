@@ -1,8 +1,10 @@
 use std::path::PathBuf;
+
 use dirs_next::home_dir;
-
 use clap::{Parser, Subcommand};
+use rusqlite::Connection;
 
+mod config;
 mod models;
 
 #[derive(Parser)]
@@ -40,26 +42,35 @@ enum Commands {
 fn main() {
     let args = Cli::parse();
     let local_db_path = PathBuf::from("./.todo/db.sqlite");
+    let local_cfg_path = PathBuf::from("./.todo/config.toml");
     let home = home_dir().expect("Failed to get home directory!");
     let global_db_path = home.join(".todo/db.sqlite");
-    assert!(!args.global || !args.local, "Cannot use global and local database at the same time!");
-    let conn = if args.local {
-        models::get_db_conn(local_db_path)
+    let global_cfg_path = home.join(".todo/config.toml");
+    assert!(!args.global || !args.local,
+        "Cannot use global and local database at the same time!");
+    let conn: Connection;
+    let cfg: config::Config;
+    if args.local {
+        conn = models::get_db_conn(local_db_path);
+        cfg = config::read_config(local_cfg_path);
     } else if args.global {
-        models::get_db_conn(global_db_path)
+        conn = models::get_db_conn(global_db_path);
+        cfg = config::read_config(global_cfg_path);
     } else if local_db_path.exists() {
-        models::get_db_conn(local_db_path)
+        conn = models::get_db_conn(local_db_path);
+        cfg = config::read_config(local_cfg_path);
     } else {
-        models::get_db_conn(global_db_path)
-    };
+        conn = models::get_db_conn(global_db_path);
+        cfg = config::read_config(global_cfg_path);
+    }
 
     match &args.command {
         Some(Commands::Add {name, description})
-            => models::add(conn, &name, &description),
-        Some(Commands::Edit {}) => models::edit(conn),
-        Some(Commands::Done {}) => models::done(conn),
-        Some(Commands::Del {}) => models::delete(conn),
-        Some(Commands::List {}) => models::list(conn),
-        None => models::list(conn),
+            => models::add(conn, cfg, &name, &description),
+        Some(Commands::Edit {}) => models::edit(conn, cfg),
+        Some(Commands::Done {}) => models::done(conn, cfg),
+        Some(Commands::Del {}) => models::delete(conn, cfg),
+        Some(Commands::List {}) => models::list(conn, cfg),
+        None => models::list(conn, cfg),
     }
 }
