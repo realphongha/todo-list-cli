@@ -37,6 +37,8 @@ enum Commands {
     Done {},
     /// Delete a task
     Del {},
+    /// Clean all done and removed tasks
+    Clean {}
 }
 
 fn main() {
@@ -71,6 +73,7 @@ fn main() {
         Some(Commands::Done {}) => models::done(conn, cfg),
         Some(Commands::Del {}) => models::delete(conn, cfg),
         Some(Commands::List {}) => models::list(conn, cfg),
+        Some(Commands::Clean {}) => models::clean_all(conn),
         None => models::list(conn, cfg),
     }
 }

@@ -100,7 +100,7 @@ pub fn list(conn: Connection, cfg: Config) {
     println!("TODO cli app. Run `todo --help` for more info.\n");
     let tasks = get_list(&conn, &cfg);
     if tasks.is_empty() {
-        println!("No tasks to show!");
+        println!("{}", "No tasks to show!".red());
         return;
     }
     for (i, task) in tasks.iter().enumerate() {
@@ -113,11 +113,11 @@ pub fn add(conn: Connection, cfg: Config, name_: &Option<String>, description_: 
     let mut description = String::new();
     if name_.is_none() {
         loop {
-            println!("Enter task name (required): ");
+            println!("{}", "Enter task name (required): ".green());
             io::stdin().read_line(&mut name).expect("Failed to read name!");
             name = name.trim().to_string();
             if name.len() > 20 {
-                println!("Name should be less than 20 characters!");
+                println!("{}", "Name should be less than 20 characters!".red());
                 continue;
             }
             if !name.is_empty() {
@@ -128,7 +128,7 @@ pub fn add(conn: Connection, cfg: Config, name_: &Option<String>, description_: 
         name = name_.clone().unwrap();
     }
     if description_.is_none() {
-        println!("Enter task description (optional): ");
+        println!("{}", "Enter task description (optional): ".green());
         io::stdin().read_line(&mut description)
             .expect("Failed to read description!");
         description = description.trim().to_string();
@@ -147,7 +147,7 @@ pub fn add(conn: Connection, cfg: Config, name_: &Option<String>, description_: 
 pub fn edit(conn: Connection, cfg: Config) {
     let tasks = get_list(&conn, &cfg);
     if tasks.is_empty() {
-        println!("No tasks to edit!");
+        println!("{}", "No tasks to edit!".red());
         return;
     }
     println!("Task list:");
@@ -172,11 +172,11 @@ pub fn edit(conn: Connection, cfg: Config) {
     let mut name = String::new();
     let mut description = String::new();
     loop {
-        println!("Enter task name (required): ");
+        println!("{}", "Enter task name (required): ".green());
         io::stdin().read_line(&mut name).expect("Failed to read name!");
         name = name.trim().to_string();
         if name.len() > 20 {
-            println!("Name should be less than 20 characters!");
+            println!("{}", "Name should be less than 20 characters!".red());
             continue;
         }
         if !name.is_empty() {
@@ -184,7 +184,7 @@ pub fn edit(conn: Connection, cfg: Config) {
         }
     }
 
-    println!("Enter task description (optional): ");
+    println!("{}", "Enter task description (optional): ".green());
     io::stdin().read_line(&mut description)
         .expect("Failed to read description!");
     description = description.trim().to_string();
@@ -201,7 +201,7 @@ pub fn edit(conn: Connection, cfg: Config) {
 pub fn done(conn: Connection, cfg: Config) {
     let tasks = get_list(&conn, &cfg);
     if tasks.is_empty() {
-        println!("No tasks to edit!");
+        println!("{}", "No tasks to edit!".red());
         return;
     }
     println!("Task list:");
@@ -235,7 +235,7 @@ pub fn done(conn: Connection, cfg: Config) {
 pub fn delete(conn: Connection, cfg: Config) {
     let tasks = get_list(&conn, &cfg);
     if tasks.is_empty() {
-        println!("No tasks to delete!");
+        println!("{}", "No tasks to delete!".red());
         return;
     }
     println!("Task list:");
@@ -266,19 +266,24 @@ pub fn delete(conn: Connection, cfg: Config) {
     list(conn, cfg);
 }
 
-pub fn clean_by_datetime(conn: &Connection, cfg: &Config) {
+fn clean_by_datetime(conn: &Connection, cfg: &Config) {
     let now = Local::now();
     let datetime = now - Duration::days(cfg.task_life_cycle.keep_done_tasks as i64);
     let res = conn.execute(
         "DELETE FROM tasks WHERE done_at < ?1 AND status == 1",
         params![datetime_to_sql_string(datetime)]
     );
-    res.expect("Failed to delete done task!");
+    res.expect("Failed to delete done tasks!");
     let datetime = now - Duration::days(cfg.task_life_cycle.keep_deleted_tasks as i64);
 
     let res = conn.execute(
         "DELETE FROM tasks WHERE done_at < ?1 AND status == 2",
         params![datetime_to_sql_string(datetime)]
     );
-    res.expect("Failed to delete removed task!");
+    res.expect("Failed to delete removed tasks!");
+}
+
+pub fn clean_all(conn: Connection) {
+    let res = conn.execute("DELETE FROM tasks WHERE status > 0", []);
+    res.expect("Failed to delete tasks!");
 }
