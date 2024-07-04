@@ -1,5 +1,6 @@
 ARCH=$(uname -m)
 OS=$(uname -s)
+VERSION=v0.1.0-alpha
 
 cargo build --release
 
@@ -13,7 +14,7 @@ echo 'rm /usr/local/bin/todo' >> target/release/uninstall.sh
 echo 'echo "Uninstalled!"' >> target/release/uninstall.sh
 chmod +x target/release/uninstall.sh
 
-zip -j target/todo-list-cli-$ARCH-$OS.zip target/release/todo \
+zip -j target/todo-list-cli-$VERSION-$ARCH-$OS.zip target/release/todo \
     target/release/install.sh target/release/uninstall.sh \
     README.md
 
