@@ -18,20 +18,20 @@ struct Task {
 impl Task {
     fn print(&self, i: usize) {
         if self.status == 1 {
-            println!("{:<3}) {} {:<20} | {} {}",
+            println!("{:<3}) {} {:<50} | {} {}",
                 i, "[✓]".green(), self.name,
                 "Done at:".green(),
                 self.done_at.as_ref().unwrap().to_rfc2822().green()
             );
         } else if self.status == 2 {
-            println!("{:<3}) {} {:<20} | {} {}",
+            println!("{:<3}) {} {:<50} | {} {}",
                 i, "[✗]".red(), self.name,
                 "Removed at:".red(),
                 self.done_at.as_ref().unwrap().to_rfc2822().red()
             );
             
         } else {
-            println!("{:<3}) {} {:<20}", i, "[ ]".yellow(), self.name);
+            println!("{:<3}) {} {:<50}", i, "[ ]".yellow(), self.name);
         }
         if !self.description.is_empty() {
             println!("     {}", self.description);
@@ -113,11 +113,16 @@ pub fn add(conn: Connection, cfg: Config, name_: &Option<String>, description_: 
     let mut description = String::new();
     if name_.is_none() {
         loop {
+            name.clear();
             println!("{}", "Enter task name (required): ".green());
             io::stdin().read_line(&mut name).expect("Failed to read name!");
             name = name.trim().to_string();
-            if name.len() > 20 {
-                println!("{}", "Name should be less than 20 characters!".red());
+            if name.len() >= 50 {
+                println!("{}", "Name should be less than 50 characters!".red());
+                continue;
+            }
+            if name.len() <= 3 {
+                println!("{}", "Name should be more than 3 characters!".red());
                 continue;
             }
             if !name.is_empty() {
@@ -172,11 +177,16 @@ pub fn edit(conn: Connection, cfg: Config) {
     let mut name = String::new();
     let mut description = String::new();
     loop {
+        name.clear();
         println!("{}", "Enter task name (required): ".green());
         io::stdin().read_line(&mut name).expect("Failed to read name!");
         name = name.trim().to_string();
-        if name.len() > 20 {
-            println!("{}", "Name should be less than 20 characters!".red());
+        if name.len() >= 50 {
+            println!("{}", "Name should be less than 50 characters!".red());
+            continue;
+        }
+        if name.len() <= 3 {
+            println!("{}", "Name should be more than 3 characters!".red());
             continue;
         }
         if !name.is_empty() {
