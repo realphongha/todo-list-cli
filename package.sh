@@ -1,22 +1,25 @@
 ARCH=$(uname -m)
 OS=$(uname -s)
-VERSION=v0.1.0-alpha
+VERSION=v0.1.1-alpha
 
 cargo build --release
 
-echo 'echo "Installing todo-list-cli..."' >> target/release/install.sh
-echo 'cp todo /usr/local/bin/' >> target/release/install.sh
-echo 'echo "Installed!"' >> target/release/install.sh
-chmod +x target/release/install.sh
+mkdir todo-list-cli-$VERSION-$ARCH-$OS
 
-echo 'echo "Uninstalling todo-list-cli..."' >> target/release/uninstall.sh
-echo 'rm /usr/local/bin/todo' >> target/release/uninstall.sh
-echo 'echo "Uninstalled!"' >> target/release/uninstall.sh
-chmod +x target/release/uninstall.sh
+echo 'echo "Installing todo-list-cli..."' >> todo-list-cli-$VERSION-$ARCH-$OS/install.sh
+echo 'cp todo /usr/local/bin/' >> todo-list-cli-$VERSION-$ARCH-$OS/install.sh
+echo 'echo "Installed!"' >> todo-list-cli-$VERSION-$ARCH-$OS/install.sh
+chmod +x todo-list-cli-$VERSION-$ARCH-$OS/install.sh
 
-zip -j target/todo-list-cli-$VERSION-$ARCH-$OS.zip target/release/todo \
-    target/release/install.sh target/release/uninstall.sh \
-    README.md
+echo 'echo "Uninstalling todo-list-cli..."' >> todo-list-cli-$VERSION-$ARCH-$OS/uninstall.sh
+echo 'rm /usr/local/bin/todo' >> todo-list-cli-$VERSION-$ARCH-$OS/uninstall.sh
+echo 'echo "Uninstalled!"' >> todo-list-cli-$VERSION-$ARCH-$OS/uninstall.sh
+chmod +x todo-list-cli-$VERSION-$ARCH-$OS/uninstall.sh
 
-rm target/release/install.sh
-rm target/release/uninstall.sh
+cp target/release/todo todo-list-cli-$VERSION-$ARCH-$OS
+cp README.md todo-list-cli-$VERSION-$ARCH-$OS
+
+zip -r todo-list-cli-$VERSION-$ARCH-$OS.zip todo-list-cli-$VERSION-$ARCH-$OS
+mv todo-list-cli-$VERSION-$ARCH-$OS.zip target
+
+rm -rf todo-list-cli-$VERSION-$ARCH-$OS
