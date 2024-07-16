@@ -10,6 +10,7 @@ clap = { version = "4.5.7", features = ["derive"] }
 colored = "2.1.0"
 dirs-next = "2.0.0"
 rusqlite = "0.31.0"
+rustyline = "14.0.0"
 serde = { version = "1.0.203", features = ["derive"] }
 toml = "0.8.14"
 

@@ -1,10 +1,10 @@
-use std::io::Write;
 use std::path::PathBuf;
-use std::{io, usize};
+use std::usize;
 use chrono::{DateTime, Duration};
 use chrono::prelude::Local;
 use rusqlite::{params, Connection};
 use colored::Colorize;
+use rustyline::DefaultEditor;
 use crate::config::Config;
 
 struct Task {
@@ -111,12 +111,18 @@ pub fn list(conn: Connection, cfg: Config) {
 pub fn add(conn: Connection, cfg: Config, name_: &Option<String>, description_: &Option<String>) {
     let mut name = String::new();
     let mut description = String::new();
+    let mut rl = DefaultEditor::new().expect("Can't create readline");
     if name_.is_none() {
         loop {
             name.clear();
-            println!("{}", "Enter task name (required): ".green());
-            io::stdin().read_line(&mut name).expect("Failed to read name!");
-            name = name.trim().to_string();
+            let readline = rl.readline("Enter task name (required): ");
+            match readline {
+                Ok(line) => {
+                    name = line.trim().to_string();
+                    let _ = rl.add_history_entry(line.as_str());
+                },
+                Err(err) => println!("Error reading line: {:?}", err),
+            };
             if name.len() >= 50 {
                 println!("{}", "Name should be less than 50 characters!".red());
                 continue;
@@ -133,10 +139,14 @@ pub fn add(conn: Connection, cfg: Config, name_: &Option<String>, description_: 
         name = name_.clone().unwrap();
     }
     if description_.is_none() {
-        println!("{}", "Enter task description (optional): ".green());
-        io::stdin().read_line(&mut description)
-            .expect("Failed to read description!");
-        description = description.trim().to_string();
+        let readline = rl.readline("Enter task description (optional): ");
+        match readline {
+            Ok(line) => {
+                description = line.trim().to_string();
+                let _ = rl.add_history_entry(line.as_str());
+            },
+            Err(err) => println!("Error reading line: {:?}", err),
+        };
     } else {
         description = description_.clone().unwrap();
     }
@@ -160,14 +170,17 @@ pub fn edit(conn: Connection, cfg: Config) {
         task.print(i+1); 
     }
     println!();
-    let mut idx: usize;
+    let mut idx: usize = tasks.len();
+    let mut rl = DefaultEditor::new().expect("Can't create readline");
     loop {
-        let mut i = String::new();
-        print!("Select task to edit: ");
-        let _ = io::stdout().flush();
-        io::stdin().read_line(&mut i)
-            .expect("Please enter a valid ID!");
-        idx = i.trim().parse::<usize>().unwrap() - 1;
+        let readline = rl.readline("Select task to edit: ");
+        match readline {
+            Ok(line) => {
+                idx = line.trim().parse::<usize>().unwrap() - 1;
+                let _ = rl.add_history_entry(line.as_str());
+            },
+            Err(err) => println!("Error reading line: {:?}", err),
+        };
         if idx < tasks.len() as usize {
             break;
         }
@@ -178,9 +191,14 @@ pub fn edit(conn: Connection, cfg: Config) {
     let mut description = String::new();
     loop {
         name.clear();
-        println!("{}", "Enter task name (required): ".green());
-        io::stdin().read_line(&mut name).expect("Failed to read name!");
-        name = name.trim().to_string();
+        let readline = rl.readline("Enter task name (required): ");
+        match readline {
+            Ok(line) => {
+                name = line.trim().to_string();
+                let _ = rl.add_history_entry(line.as_str());
+            },
+            Err(err) => println!("Error reading line: {:?}", err),
+        };
         if name.len() >= 50 {
             println!("{}", "Name should be less than 50 characters!".red());
             continue;
@@ -194,10 +212,14 @@ pub fn edit(conn: Connection, cfg: Config) {
         }
     }
 
-    println!("{}", "Enter task description (optional): ".green());
-    io::stdin().read_line(&mut description)
-        .expect("Failed to read description!");
-    description = description.trim().to_string();
+    let readline = rl.readline("Enter task description (optional): ");
+    match readline {
+        Ok(line) => {
+            description = line.trim().to_string();
+            let _ = rl.add_history_entry(line.as_str());
+        },
+        Err(err) => println!("Error reading line: {:?}", err),
+    };
 
     let res = conn.execute(
         "UPDATE tasks SET name = ?1, description = ?2 WHERE id = ?3",
@@ -219,14 +241,17 @@ pub fn done(conn: Connection, cfg: Config) {
         task.print(i+1); 
     }
     println!();
-    let mut idx: usize;
+    let mut idx: usize = tasks.len();
+    let mut rl = DefaultEditor::new().expect("Can't create readline");
     loop {
-        let mut i = String::new();
-        print!("Select task to mark as done: ");
-        let _ = io::stdout().flush();
-        io::stdin().read_line(&mut i)
-            .expect("Please enter a valid ID!");
-        idx = i.trim().parse::<usize>().unwrap() - 1;
+        let readline = rl.readline("Select task to mark as done: ");
+        match readline {
+            Ok(line) => {
+                idx = line.trim().parse::<usize>().unwrap() - 1;
+                let _ = rl.add_history_entry(line.as_str());
+            },
+            Err(err) => println!("Error reading line: {:?}", err),
+        };
         if idx < tasks.len() as usize {
             break;
         }
@@ -253,14 +278,17 @@ pub fn delete(conn: Connection, cfg: Config) {
         task.print(i+1); 
     }
     println!();
-    let mut idx: usize;
+    let mut idx: usize = tasks.len();
+    let mut rl = DefaultEditor::new().expect("Can't create readline");
     loop {
-        let mut i = String::new();
-        print!("Select task to delete: ");
-        let _ = io::stdout().flush();
-        io::stdin().read_line(&mut i)
-            .expect("Please enter a valid ID!");
-        idx = i.trim().parse::<usize>().unwrap() - 1;
+        let readline = rl.readline("Select task to delete: ");
+        match readline {
+            Ok(line) => {
+                idx = line.trim().parse::<usize>().unwrap() - 1;
+                let _ = rl.add_history_entry(line.as_str());
+            },
+            Err(err) => println!("Error reading line: {:?}", err),
+        };
         if idx < tasks.len() as usize {
             break;
         }
