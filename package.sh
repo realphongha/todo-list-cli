@@ -1,6 +1,6 @@
 ARCH=$(uname -m)
 OS=$(uname -s)
-VERSION=v0.1.1-alpha
+VERSION=v0.1.2
 
 cargo build --release
 
